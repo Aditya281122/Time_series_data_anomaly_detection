@@ -1,0 +1,17 @@
+{
+  "event_level": {
+    "precision": 0.39999999992,
+    "recall": 0.9999999998,
+    "f1": 0.5714285709061224,
+    "tp": 2,
+    "fp": 3,
+    "fn": 0,
+    "n_true_events": 5,
+    "n_pred_events": 5
+  },
+  "best_threshold": 5.368421052631579,
+  "weights": {
+    "bsts": 0.5,
+    "lstm": 0.5
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "event_level": {
+    "precision": 0.09999999999,
+    "recall": 0.3333333332222222,
+    "f1": 0.15384615346745562,
+    "tp": 1,
+    "fp": 9,
+    "fn": 2,
+    "n_true_events": 3,
+    "n_pred_events": 10
+  },
+  "business": {
+    "fp_per_day": 0.1675067855758046,
+    "median_latency_minutes": 0.0,
+    "fp_count": 9,
+    "duration_days": 53.729166666666664
+  },
+  "best_k": 2.5,
+  "val_f1": 0.0
+}
