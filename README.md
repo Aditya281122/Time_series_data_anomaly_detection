@@ -50,44 +50,69 @@ To ensure our system is battle-tested, we selected three datasets that represent
 Our system is built on rigorous mathematical principles. Here is the statistical machinery under the hood.
 
 ### 1. STL Decomposition (Loess Smoothing)
-We decompose the time series $Y_\nu$ into Trend ($T_\nu$), Seasonal ($S_\nu$), and Residual ($R_\nu$). The core engine is **Loess (Locally Estimated Scatterplot Smoothing)**.
+We decompose the time series $Y_t$ into Trend ($T_t$), Seasonal ($S_t$), and Residual ($R_t$). The core engine is **Loess (Locally Estimated Scatterplot Smoothing)**.
 For a point $x$, Loess fits a weighted polynomial where weights $w_i(x)$ decay with distance:
-$$ w_i(x) = W\left(\frac{|x_i - x|}{d(x)}\right) $$
-where $W(u)$ is the tricube weight function:
-$$ W(u) = \begin{cases} (1 - u^3)^3 & \text{for } 0 \le u < 1 \\ 0 & \text{for } u \ge 1 \end{cases} $$
-This allows us to extract a smooth non-linear trend $T_\nu$ without assuming a fixed parametric form (like linear regression).
+
+```math
+w_i(x) = W(|x_i - x| / d(x))
+
+W(u) = (1 - u^3)^3  for 0 <= u < 1
+       0            for u >= 1
+```
+
+This allows us to extract a smooth non-linear trend $T_t$ without assuming a fixed parametric form (like linear regression).
 
 ### 2. Gaussian Processes (Kernel Engineering)
 We model the function $f(x)$ as an infinite-dimensional multivariate Gaussian distribution:
-$$ f(x) \sim \mathcal{GP}(m(x), k(x, x')) $$
+
+```math
+f(x) ~ GP(m(x), k(x, x'))
+```
+
 The power lies in the **Covariance Kernel** $k(x, x')$, which defines the similarity between points. We constructed a **Composite Kernel**:
 
-$$ k_{total} = k_{RBF} + k_{Per} + k_{Noise} $$
+```math
+k_total = k_RBF + k_Per + k_Noise
+```
 
 **A. Radial Basis Function (RBF)** - Captures smooth trends (e.g., machine drift):
-$$ k_{RBF}(x, x') = \sigma^2 \exp\left( -\frac{(x - x')^2}{2l^2} \right) $$
+```math
+k_RBF(x, x') = sigma^2 * exp( - (x - x')^2 / (2 * l^2) )
+```
 
 **B. Exp-Sine-Squared** - Captures rigid seasonality (e.g., daily taxi cycles):
-$$ k_{Per}(x, x') = \sigma^2 \exp\left( -\frac{2\sin^2(\pi|x - x'|/p)}{l^2} \right) $$
+```math
+k_Per(x, x') = sigma^2 * exp( - 2 * sin^2(pi * |x - x'| / p) / l^2 )
+```
 where $p$ is the period (48 for daily).
 
 **Anomaly Score**: We use the Z-score derived from the posterior predictive distribution:
-$$ Z_t = \frac{|y_t - \mu_{pred}|}{\sqrt{\sigma^2_{pred} + \sigma^2_{noise}}} $$
+```math
+Z_t = |y_t - mu_pred| / sqrt(sigma^2_pred + sigma^2_noise)
+```
 
 ### 3. Long Short-Term Memory (LSTM)
 To capture non-linear temporal dependencies in the residuals $R_t$, we use an LSTM. The core equations for the forget gate ($f_t$), input gate ($i_t$), and output gate ($o_t$) are:
-$$ f_t = \sigma(W_f \cdot [h_{t-1}, x_t] + b_f) $$
-$$ i_t = \sigma(W_i \cdot [h_{t-1}, x_t] + b_i) $$
-$$ \tilde{C}_t = \tanh(W_C \cdot [h_{t-1}, x_t] + b_C) $$
-$$ C_t = f_t * C_{t-1} + i_t * \tilde{C}_t $$
-$$ o_t = \sigma(W_o \cdot [h_{t-1}, x_t] + b_o) $$
-$$ h_t = o_t * \tanh(C_t) $$
+
+```math
+f_t = sigmoid(W_f * [h_{t-1}, x_t] + b_f)
+i_t = sigmoid(W_i * [h_{t-1}, x_t] + b_i)
+C_tilde_t = tanh(W_C * [h_{t-1}, x_t] + b_C)
+C_t = f_t * C_{t-1} + i_t * C_tilde_t
+o_t = sigmoid(W_o * [h_{t-1}, x_t] + b_o)
+h_t = o_t * tanh(C_t)
+```
+
 By training on $R_t$ (the residuals), the LSTM focuses its capacity on learning the *structure of the noise* (e.g., autocorrelation) rather than the obvious seasonality.
 
 ### 4. Robust Statistics (MAD)
 Standard deviation is sensitive to outliers. For anomaly detection, this is fatal: a large anomaly inflates the threshold, masking smaller anomalies. We use **Median Absolute Deviation (MAD)**:
-$$ \text{MAD} = \text{median}(|X_i - \text{median}(X)|) $$
-$$ \hat{\sigma} \approx 1.4826 \cdot \text{MAD} $$
+
+```math
+MAD = median(|X_i - median(X)|)
+sigma_hat approx 1.4826 * MAD
+```
+
 This provides a robust estimate of scale $\hat{\sigma}$ that remains stable even in the presence of extreme outliers.
 
 ---
