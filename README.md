@@ -45,6 +45,24 @@ To ensure our system is battle-tested, we selected three datasets that represent
 
 ---
 
+## 📊 Dataset Visualizations
+
+Below are the forecasts and anomaly detections for the three key datasets. These plots illustrate the distinct characteristics (seasonality, noise, drift) of each domain.
+
+### 1. NYC Taxi (Seasonal)
+*Clear daily and weekly rhythms. Anomalies are deviations from this rigid structure.*
+![NYC Taxi Forecast](results/gp/realKnownCause__nyc_taxi.csv/forecast_detected.png)
+
+### 2. Twitter Volume (High Variance)
+*Noisy, spiky data. Anomalies are extreme spikes that exceed the already high variance.*
+![Twitter Volume Forecast](results/bsts/realTweets__Twitter_volume_AMZN.csv/forecast_detected.png)
+
+### 3. Machine Temperature (Drift)
+*Slow thermal drift. Anomalies are subtle deviations from the drifting baseline.*
+![Machine Temp Forecast](results/bsts/realKnownCause__machine_temperature_system_failure.csv/forecast_detected.png)
+
+---
+
 ## 🧮 Mathematical Foundations
 
 Our system is built on rigorous mathematical principles. Here is the statistical machinery under the hood.
