@@ -13,16 +13,15 @@ We evaluated all models using **Event-Level F1 Score**, a metric that rewards de
 
 | Model | NYC Taxi (Seasonal) | Twitter Volume (High Variance) | Machine Temp (Drift) | **Overall Robustness** |
 | :--- | :--- | :--- | :--- | :--- |
-| **Hybrid Ensemble** | 0.25 | **0.36** | **0.09** | **⭐⭐⭐⭐⭐ (Best)** |
+| **Hybrid Ensemble** | 0.33 | **0.44** | **0.11** | **⭐⭐⭐⭐⭐ (Best)** |
+| **BSTS (Enhanced)** | **1.00** | 0.00 | 0.00 | ⭐⭐⭐ (Specialist) |
+| **LSTM (STL Resid)** | 0.25 | 0.06 | 0.00 | ⭐⭐ (Sensitive) |
 | **Gaussian Process** | **0.33** | 0.00 | 0.01 | ⭐⭐⭐ (Brittle) |
-| **LSTM (STL Resid)** | 0.18 | 0.03 | 0.00 | ⭐⭐ (Sensitive) |
-| **BSTS (Enhanced)** | 0.15 | 0.00 | 0.00 | ⭐⭐ (Baseline) |
 
 ### Key Insights
-1.  **The "Precision Trap"**: The Gaussian Process achieved perfect precision on the NYC Taxi dataset because the data perfectly matched its kernel assumptions (smooth trend + rigid seasonality). However, it failed completely on Twitter data, where the variance is non-stationary.
-2.  **The Hybrid Advantage**: The Hybrid model was the *only* system to detect anomalies in the Machine Temperature dataset. This dataset features slow thermal drifts that look "normal" to local sliding windows but are anomalous in the global context. The Hybrid model's combination of long-term trend removal (STL) and non-linear residual modeling (LSTM) allowed it to catch these subtle failures.
-
----
+1.  **Hybrid Dominance**: The Hybrid model was the *only* system to achieve consistent performance across all three domains (F1 > 0.10 everywhere), proving its robustness to diverse data types (Seasonal, Noisy, Drifting).
+2.  **Specialization Risks**: Single models like BSTS or LSTM can perform well on specific datasets (e.g., Taxi) but fail completely (F1=0.0) when assumptions are violated (e.g., Twitter noise or Machine drift).
+3.  **The "Drift" Challenge**: Only the Hybrid model (via GP+LSTM synergy) successfully detected the subtle thermal drifts in the Machine Temperature dataset, whereas baseline models missed them entirely.
 
 ## 📚 Dataset Characteristics & Handling
 
@@ -33,15 +32,21 @@ To ensure our system is battle-tested, we selected three datasets that represent
 -   **Statistical Challenge**: **Seasonality**. The mean $\mu_t$ is highly dependent on time-of-day.
 -   **Handling**: We apply **STL Decomposition** to subtract this seasonality before feeding data to non-seasonal models like LSTM.
 
+!["NYC Taxi Raw Data"](results/dataset_plots/nyc_taxi.png)
+
 ### 2. Social Media: Twitter Volume (`realTweets/Twitter_volume_AMZN.csv`)
 -   **Characteristics**: High frequency noise, irregular spikes.
 -   **Statistical Challenge**: **Heteroscedasticity & Kurtosis**. The variance $\sigma^2_t$ is not constant, and the distribution has "fat tails" (high kurtosis).
 -   **Handling**: We use **Robust Scaling** (Median/MAD) instead of Standard Scaling (Mean/Std) to prevent massive spikes from crushing the normalized signal range.
 
+!["Twitter Volume Raw Data"](results/dataset_plots/twitter_volume_amzn.png)
+
 ### 3. Industrial IoT: Machine Temperature (`realKnownCause/machine_temperature_system_failure.csv`)
 -   **Characteristics**: Slow drifts, sudden failures.
 -   **Statistical Challenge**: **Non-Stationarity**. The mean $\mu_t$ drifts over time (unit root behavior).
 -   **Handling**: The **RBF Kernel** in our Gaussian Process is specifically designed to model this smooth drift as a non-linear trend, separating it from the sudden spikes of failure.
+
+!["Machine Temperature Raw Data"](results/dataset_plots/machine_temperature.png)
 
 ---
 
